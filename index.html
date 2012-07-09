@@ -9,44 +9,48 @@
 <script type="text/javascript" charset="utf-8" src="assets/js/distance.js"></script>
 
 <script type="text/javascript">
+ 	function doStuff() {
+ 		//get location
+		navigator.geolocation.getCurrentPosition(crosscom.updateLocation);
+
+		//get closest bus stop
+		var stop = crosscom.getClosestStop();
+		$('#stopname').html(crosscom.stop.name);
+
+		//get timetable
+		$.ajax({ 
+					url: 'http://lprwilima.lappeenranta.fi:8080/karttasovellus/MainServlet',
+
+					type:'POST',
+
+					data:{
+							StopId:crosscom.stop.id,
+							lang:'fi_FI',
+							_:''
+						}, 
+
+					// dataType: 'json',
+
+					success: function (response, status, xhr){
+						var buses = JSON.parse(response);
+						var res = '';
+
+						for(var i = 0; i < buses.length; i++) 
+							res += buses[i].time + '<br/>';
+						$('#timetable').html(res);					
+					},
+					 
+					 error: function(xhr, type){
+					    $('#timetable').html('ERROR');	
+					  }
+				});
+
+		//display timetable
+ 	} 
+
 	$(function () {
 		$('button').on('tap', function () {
-			//get location
-			navigator.geolocation.getCurrentPosition(crosscom.updateLocation);
-
-			//get closest bus stop
-			var stop = crosscom.getClosestStop();
-			$('#stopname').html(crosscom.stop.name);
-
-			//get timetable
-			$.ajax({ 
-						url: 'http://lprwilima.lappeenranta.fi:8080/karttasovellus/MainServlet',
-
-						type:'POST',
-
-						data:{
-								StopId:crosscom.stop.id,
-								lang:'fi_FI',
-								_:''
-							}, 
-
-						// dataType: 'json',
-
-						success: function (response, status, xhr){
-							var buses = JSON.parse(response);
-							var res = '';
-
-							for(var i = 0; i < buses.length; i++) 
-								res += buses[i].time + '<br/>';
-							$('#timetable').html(res);					
-						},
-						 
-						 error: function(xhr, type){
-						    $('#timetable').html('ERROR');	
-						  }
-					});
-
-			//display timetable
+			doStuff();
 		});
 	});
 
