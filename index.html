@@ -10,7 +10,7 @@
 
 <script type="text/javascript">
 	$(function () {
-		$('button').click(function () {
+		$('button').on('tap', function () {
 			//get location
 			navigator.geolocation.getCurrentPosition(crosscom.updateLocation);
 
