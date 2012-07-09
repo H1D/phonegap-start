@@ -1,63 +1,105 @@
-<!doctype html>
+<!DOCTYPE HTML>
 <html>
-	<head>
-		<meta name="viewport" content="initial-scale=1.0, user-scalable=no, width=device-width" />
-		<title>Training App</title>
-		<link rel="stylesheet" href="assets/css/master.css" type="text/css" media="screen" />
-		
-		<script src="phonegap.js" type="text/javascript" charset="utf-8"></script>
-		
-		<script src="assets/js/xui.js" type="text/javascript" charset="utf-8"></script>
-		
-		<script src="assets/js/lawnchair/adaptors/LawnchairAdaptorHelpers.js" type="text/javascript" charset="utf-8"></script>
-		
-		<script src="assets/js/lawnchair/adaptors/DOMStorageAdaptor.js" type="text/javascript" charset="utf-8"></script>
-		
-		<script src="assets/js/lawnchair/adaptors/WebkitSQLiteAdaptor.js" type="text/javascript" charset="utf-8"></script>
-		
-		<script src="assets/js/lawnchair/Lawnchair.js" type="text/javascript" charset="utf-8"></script>
-		
-		<script src="assets/js/dsl.js" type="text/javascript" charset="utf-8"></script>
-		
-		<script src="assets/js/app.js" type="text/javascript" charset="utf-8"></script>
-		
-	</head>
-	<body>
- 		<div id="title_bar">Phone<strong>Gap</strong> Training App</div>
+<head>
+<title>Cordova</title>
+<script src="phonegap.js" type="text/javascript" charset="utf-8"></script>
+<script type="text/javascript" charset="utf-8" src="assets/js/cordova-1.9.0.js"></script>
+<script type="text/javascript" charset="utf-8" src="assets/js/zepto.min.js"></script>
+<script type="text/javascript" charset="utf-8" src="assets/js/underscore-min.js"></script>
+<script type="text/javascript" charset="utf-8" src="assets/js/distance.js"></script>
 
-		<div id="welcome" class="view">
-		  <div class="app_button" id="map_button">Show My Location</div>
-  	      <div class="app_button" id="settings_button">Settings</div>
-		</div>
+<script type="text/javascript">
+	$(function () {
+		$('button').click(function () {
+			//get location
+			navigator.geolocation.getCurrentPosition(crosscom.updateLocation);
 
-		<div id="map" class="view">
-		  <div class="map_image">
-              <img id="static_map" src="assets/img/staticmap.png">
-		  </div>
-		  <p>This is where you are</p>
-		  <div class="app_button" id="welcome_button">Go Back</div>
-		</div>
+			//get closest bus stop
+			var stop = crosscom.getClosestStop();
+			$('#stopname').html(crosscom.stop.name);
 
-		<div id="settings" class="view">
-		  <form id="settings_form">
-		    <fieldset>
-		      <legend>Map Type</legend>
-			  <input type="radio" name="map" value="roadmap" checked>Road Map<br/>
-		      <input type="radio" name="map" value="satellite">Satellite<br/>
-		      <input type="radio" name="map" value="terrain">Terrain<br/>
-		      <input type="radio" name="map" value="hybrid">Hybrid<br/>
-		    </fieldset>
-		    <fieldset>
-		      <legend>Zoom Level</legend>
-  		      <input type="radio" name="zoom" value="10">Super Far<br/>
-  		      <input type="radio" name="zoom" value="12">Far<br/>
-  		      <input type="radio" name="zoom" value="15" checked>Normal<br/>
-  		      <input type="radio" name="zoom" value="18">Close<br/>
-  		      <input type="radio" name="zoom" value="20">Super Close<br/>
-  		     </fieldset>
-		      <button id="save_button">Save</button>
-	      </form>
-		</div>
+			//get timetable
+			$.ajax({ 
+						url: 'http://lprwilima.lappeenranta.fi:8080/karttasovellus/MainServlet',
 
-	</body>
+						type:'POST',
+
+						data:{
+								StopId:crosscom.stop.id,
+								lang:'fi_FI',
+								_:''
+							}, 
+
+						// dataType: 'json',
+
+						success: function (response, status, xhr){
+							var buses = JSON.parse(response);
+							var res = '';
+
+							for(var i = 0; i < buses.length; i++) 
+								res += buses[i].time + '<br/>';
+							$('#timetable').html(res);					
+						},
+						 
+						 error: function(xhr, type){
+						    $('#timetable').html('ERROR');	
+						  }
+					});
+
+			//display timetable
+		});
+	});
+
+	var crosscom = {
+		updateLocation:function (pos) {
+			crosscom.position = {
+				lat:pos.coords.latitude,
+				lon:pos.coords.longitude,
+				acc:pos.coords.accuracy,
+				ts:pos.timestamp
+			};
+		},
+
+		getClosestStop:function () {
+			var stop = _.sortBy(crosscom.stops,function (another_stop){
+				return distance(
+						crosscom.position.lat,
+						another_stop.lat,
+						crosscom.position.lon,
+						another_stop.lon,
+						true);				
+			})[0];
+
+			crosscom.stop = {
+				name:stop.name,
+				id: stop.id
+			}
+		},
+
+		onError:function () {alert('onError!');},
+
+		position : {lat:61.064474,lon:28.092513,acc:1}
+	};	
+</script>
+<style type="text/css">
+button {
+	width:100%;
+	font-size: 2em;
+}
+h4 {
+	margin-bottom: .1em;
+}
+p {
+	margin-top: .1em;
+}
+</style>
+<script type="text/javascript" charset="utf-8" src="lappe-stops.js"></script>
+</head>
+<body>
+	<button>Update timetable</button>
+	<h4>Closest busstop</h4>
+	<p id="stopname"></p>
+	<h4>Busses</h4>
+	<p id="timetable"></p>
+</body>
 </html>
