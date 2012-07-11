@@ -15,7 +15,8 @@
 
 		//get closest bus stop
 		var stop = crosscom.getClosestStop();
-		$('#stopname').html("["+crosscom.stop.lat+":"+crosscom.stop.lon+"]"+crosscom.stop.name);
+		// $('#stopname').html("["+crosscom.stop.lat+":"+crosscom.stop.lon+"]"+crosscom.stop.name);
+		$('#stopname').html(crosscom.stop.name);
 
 		//get timetable
 		$.ajax({ 
